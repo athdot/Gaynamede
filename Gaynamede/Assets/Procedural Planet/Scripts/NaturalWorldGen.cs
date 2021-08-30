@@ -9,12 +9,16 @@ public class NaturalWorldGen : MonoBehaviour {
     [Header (" TERRAIN: ")]
     [Space]
     [Tooltip (" Click and drag the Terrain you want to have Generated")]
-    public Terrain terr; // terrain to modify
+    public GameObject primaryTerrain;
+    private Terrain terr; // terrain to modify
 
-    private float heightMapMax = 10000.0f;
-    private float startHeight = 8000.0f;
+    private float heightMapMax = 100.0f;
+    private float startHeight = 0.0f; //8000
 
     private int width, height = 300;
+
+    private static float baseLine;
+    private static bool setBase = false;
 
     public float[, ] heightMap;
     [Space]
@@ -32,11 +36,11 @@ public class NaturalWorldGen : MonoBehaviour {
     void Start(){
         setup();
         displayMap();
-        gameObject.GetComponent<TerraTexLite.TerraTexLite>().runScript();
     }
 
     public void setup () {
         //Terrain initialization, terrain scripting is later
+        terr = primaryTerrain.GetComponent<Terrain>();
         terr = Terrain.activeTerrain;
         width = terr.terrainData.heightmapResolution;
         height = terr.terrainData.heightmapResolution;
@@ -52,6 +56,8 @@ public class NaturalWorldGen : MonoBehaviour {
         asteroids (0.1f, 100, 0.5f);
 
         smoothCircle (smootherIteration, width, width / 2, height / 2);
+        
+        //veryRandom();
 
         //Display Heightmap
         //displayMap ();
@@ -160,7 +166,7 @@ public class NaturalWorldGen : MonoBehaviour {
         //read individual heightmap point data and draw
         float[, ] heights = terr.terrainData.GetHeights (0, 0, width, height);
         float min = heightMap[0, 0];
-        float max = 0.0f;
+        float max = heightMap[0, 0];
         for (int x = 0; x < heightMap.GetLength (0); x++) {
             for (int y = 0; y < heightMap.GetLength (1); y++) {
                 if (heightMap[x, y] > max) {
@@ -173,17 +179,24 @@ public class NaturalWorldGen : MonoBehaviour {
         }
 
         float dataSize = (max - min);
-        terr.terrainData.size = new Vector3 (heightMap.GetLength(0) , dataSize*terrainSlopeModifier, heightMap.GetLength(1));
+        terr.terrainData.size = new Vector3 (heightMap.GetLength(0) , dataSize * terrainSlopeModifier, heightMap.GetLength(1));
+
+        if (!setBase) {
+            baseLine = min * 10;
+            setBase = true;
+        }
+
+        primaryTerrain.transform.position = new Vector3(primaryTerrain.transform.position.x, min * 10 - baseLine, primaryTerrain.transform.position.z);
 
         //REMOVABLE
         float maxxy = 0.0f;
 
         for (int x = 0; x < heightMap.GetLength (0); x++) {
             for (int y = 0; y < heightMap.GetLength (1); y++) {
-                heights[x, y] = ((heightMap[x, y] - min) / dataSize)*0.5f+0.25f;
+                heights[x, y] = ((heightMap[x, y] - min) / dataSize); // * 0.5f + 0.25f;
 
                 //REMOVABLE
-                if(x == 0 || y == 0 || x == heightMap.GetLength(0)-1 || y == heightMap.GetLength(1)-1){
+                if(x == 0 || y == 0 || x == heightMap.GetLength(0) - 1 || y == heightMap.GetLength(1) - 1){
                     if(heights[x,y] > maxxy){
                         maxxy = heights[x,y];
                     }
@@ -218,6 +231,7 @@ public class NaturalWorldGen : MonoBehaviour {
         //Create tiny originial array of the circle values
         float[, ] originalMap = new float[(int) (circleRadius * 2), (int) (circleRadius * 2)];
         float[, ] newMap = new float[(int) (circleRadius * 2), (int) (circleRadius * 2)];
+        bool[, ] ignoreMe = new bool[(int) (circleRadius * 2), (int) (circleRadius * 2)];
 
         //Assign current map values to original map
         for (int yy = 0; yy < (int) circleRadius * 2; yy++) {
@@ -225,6 +239,7 @@ public class NaturalWorldGen : MonoBehaviour {
             for (int xx = 0; xx < (int) circleRadius * 2; xx++) {
                 originalMap[xx, yy] = getHeight (x + xx - (int) circleRadius, y + yy - (int) circleRadius);
                 newMap[xx, yy] = getHeight (x + xx - (int) circleRadius, y + yy - (int) circleRadius);
+                ignoreMe[xx, yy] = false;
             }
         }
 
@@ -240,37 +255,37 @@ public class NaturalWorldGen : MonoBehaviour {
 
                         //add values of pixels around
                         
-                        if (xxx - 1 >= 0 && yyy + 1 < circleRadius * 2 && originalMap[xxx - 1, yyy + 1] >= 0) {
+                        if (xxx - 1 >= 0 && yyy + 1 < circleRadius * 2) {
                             values++;
                             mediumHeight += originalMap[xxx - 1, yyy + 1];
                         }
-                        if (xxx + 1 < circleRadius * 2 && yyy + 1 < circleRadius * 2 && originalMap[xxx + 1, yyy + 1] >= 0) {
+                        if (xxx + 1 < circleRadius * 2 && yyy + 1 < circleRadius * 2) {
                             values++;
                             mediumHeight += originalMap[xxx + 1, yyy + 1];
                         }
-                        if (xxx + 1 < circleRadius * 2 && yyy - 1 >= 0 && originalMap[xxx + 1, yyy - 1] >= 0) {
+                        if (xxx + 1 < circleRadius * 2 && yyy - 1 >= 0) {
                             values++;
                             mediumHeight += originalMap[xxx + 1, yyy - 1];
                         }
-                        if (xxx - 1 >= 0 && yyy - 1 >= 0 && originalMap[xxx - 1, yyy - 1] >= 0) {
+                        if (xxx - 1 >= 0 && yyy - 1 >= 0) {
                             values++;
                             mediumHeight += originalMap[xxx - 1, yyy - 1];
                         }
                         
                         //up down left right
-                        if (xxx - 1 >= 0 && originalMap[xxx - 1, yyy] >= 0) {
+                        if (xxx - 1 >= 0) {
                             values++;
                             mediumHeight += originalMap[xxx - 1, yyy];
                         }
-                        if (xxx + 1 < circleRadius * 2 && originalMap[xxx + 1, yyy] >= 0) {
+                        if (xxx + 1 < circleRadius * 2) {
                             values++;
                             mediumHeight += originalMap[xxx + 1, yyy];
                         }
-                        if (yyy - 1 >= 0 && originalMap[xxx, yyy - 1] >= 0) {
+                        if (yyy - 1 >= 0) {
                             values++;
                             mediumHeight += originalMap[xxx, yyy - 1];
                         }
-                        if (yyy + 1 < circleRadius * 2 && originalMap[xxx, yyy + 1] >= 0) {
+                        if (yyy + 1 < circleRadius * 2) {
                             values++;
                             mediumHeight += originalMap[xxx, yyy + 1];
                         }
@@ -279,7 +294,8 @@ public class NaturalWorldGen : MonoBehaviour {
                         newMap[xxx, yyy] = mediumHeight;
                     } else {
                         //make all heights -1 on pixels outside of field
-                        newMap[xxx, yyy] = -1.0f;
+                        //UPDATE not proper coding style, upgraded.
+                        ignoreMe[xxx, yyy] = true;
                     }
                 }
             }
@@ -288,7 +304,7 @@ public class NaturalWorldGen : MonoBehaviour {
                 for (int xxxx = 0; xxxx < circleRadius * 2; xxxx++) {
                     //originalMap[xx][yy] = getHeight(x+xx-(int)circleRadius,y+yy-(int)circleRadius);
                     originalMap[xxxx, yyyy] = newMap[xxxx, yyyy];
-                    if (newMap[xxxx, yyyy] > 0.0f) {
+                    if (!ignoreMe[xxxx, yyyy]) {
                         setHeight (newMap[xxxx, yyyy], x + xxxx - (int) circleRadius, y + yyyy - (int) circleRadius);
                     }
                 }

@@ -404,7 +404,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 702e1aee96b61bc41bc16f874f029c97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  terr: {fileID: 565267595}
+  primaryTerrain: {fileID: 565267594}
   terrainSlopeModifier: 1
   smootherIteration: 7
   asteroidSmoothing: 5

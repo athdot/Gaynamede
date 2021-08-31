@@ -15,7 +15,7 @@ public class NaturalWorldGen : MonoBehaviour {
     private float heightMapMax = 100.0f;
     private float startHeight = 1000.0f; //8000
 
-    private int width, height = 300;
+    private int width, height = 600;
 
     private static float baseLine;
     private static bool setBase = false;
@@ -35,6 +35,7 @@ public class NaturalWorldGen : MonoBehaviour {
 
     [Tooltip ("This variable sets a baseline for random generation planet-wise. Leave as -1 for a random seed.")]
     public int seed = -1;
+    private float scaler = 0.02f;
     //private readonly String seedDigits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
     //private int seedNum = 0;
 
@@ -58,7 +59,6 @@ public class NaturalWorldGen : MonoBehaviour {
         }
         seed = seed % 2147483647;
         Random.InitState(seed);
-
  
         //size(heightMapX,heightMapY)
 
@@ -66,9 +66,9 @@ public class NaturalWorldGen : MonoBehaviour {
         buildHM (width, height);
 
         //Build Elements of Heightmap,Like blender
-        asteroids (0.1f, 100, 0.5f);
+        asteroids (0.2f, 120, 0.1f);
 
-        smoothCircle (smootherIteration, width, width / 2, height / 2);
+        smoothCircle (5, width, width / 2, height / 2); //smootherIteration
         
         //veryRandom();
 
@@ -98,7 +98,7 @@ public class NaturalWorldGen : MonoBehaviour {
         //fill heightmap with starting values
         for (int x = 0; x < wid; x++) {
             for (int y = 0; y < hig; y++) {
-                heightMap[x, y] = startHeight;
+                heightMap[x, y] = startHeight + Mathf.PerlinNoise(((float) x) * scaler, ((float) y) * scaler) * 7.5f;
             }
         }
     }
@@ -124,7 +124,7 @@ public class NaturalWorldGen : MonoBehaviour {
             if (size > midLine) {
                 //complex
                 float d1 = size - size * Mathf.Cos (Mathf.PI / 4);
-                smoothCircle (asteroidSmoothing, size, cX, cY);
+                //smoothCircle (asteroidSmoothing, size, cX, cY);
                 int pixelsRemoved = 0;
                 for (int j = (int) d1; j >= 0; j -= 2) {
                     //get impact circle widths
@@ -133,17 +133,17 @@ public class NaturalWorldGen : MonoBehaviour {
                 }
                 //Middle Lump
 
-                for (int q = 0; q < d1 / 5.0f; q++) {
+                for (int q = 0; q < d1 / 6.0f; q++) {
                     //get impact circle widths
-                    float w = size / 5.0f * Mathf.Sin (Mathf.Acos ((size / 5.0f - q) / size / 5.0f));
-                    inverseDrawCircle (w / 5.0f, cX, cY);
+                    float w = size / 6.0f * Mathf.Sin (Mathf.Acos ((size / 6.0f - q) / size / 6.0f));
+                    inverseDrawCircle (w / 6.0f, cX, cY);
                 }
 
             } else {
                 //simple
                 //quite rudimentary. It doesn't do anything for impact angle relative to whats already there but thats okay. Will come up for a solution later.
-                float d1 = size - size * Mathf.Cos (Mathf.PI / 4);
-                smoothCircle (asteroidSmoothing, size, cX, cY);
+                float d1 = size - size * Mathf.Cos (Mathf.PI / 6);
+                //smoothCircle (asteroidSmoothing, size, cX, cY);
                 int pixelsRemoved = 0;
                 for (int j = (int) d1; j >= 0; j--) {
                     //get impact circle widths
@@ -192,7 +192,9 @@ public class NaturalWorldGen : MonoBehaviour {
         }
 
         float dataSize = (max - min);
-        terr.terrainData.size = new Vector3 (heightMap.GetLength(0) , dataSize * terrainSlopeModifier, heightMap.GetLength(1));
+        //x = heightMap.GetLength(0)
+        //z = heightMap.GetLength(1)
+        terr.terrainData.size = new Vector3 (1000, dataSize * terrainSlopeModifier, 1000);
 
         if (!setBase) {
             baseLine = min * 10;

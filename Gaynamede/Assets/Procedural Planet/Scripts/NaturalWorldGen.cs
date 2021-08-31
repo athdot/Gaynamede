@@ -13,7 +13,7 @@ public class NaturalWorldGen : MonoBehaviour {
     private Terrain terr; // terrain to modify
 
     private float heightMapMax = 100.0f;
-    private float startHeight = 0.0f; //8000
+    private float startHeight = 1000.0f; //8000
 
     private int width, height = 300;
 
@@ -33,6 +33,11 @@ public class NaturalWorldGen : MonoBehaviour {
     [Tooltip ("This setting changes how many iterations of smoothing happens in asteroid impact zones due to flattening. The lower this is, the faster the game will run but beware, lowering this decreases terrain realism and smoothness. Preffered number for this is 4, but it is passible with a 2...")]
     public int asteroidSmoothing = 5;
 
+    [Tooltip ("This variable sets a baseline for random generation planet-wise. Leave as -1 for a random seed.")]
+    public int seed = -1;
+    //private readonly String seedDigits = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+    //private int seedNum = 0;
+
     void Start(){
         setup();
         displayMap();
@@ -47,6 +52,14 @@ public class NaturalWorldGen : MonoBehaviour {
         Terrain.activeTerrain.heightmapMaximumLOD = 0;
         //End of terrain
 
+        //This part sets a seed if one hasn't been provided.
+        if (seed < 0) {
+            seed = (int) SeedRandom(0, 2147483647);
+        }
+        seed = seed % 2147483647;
+        Random.InitState(seed);
+
+ 
         //size(heightMapX,heightMapY)
 
         //Initialization of Heightmap
@@ -103,10 +116,10 @@ public class NaturalWorldGen : MonoBehaviour {
 
         for (int i = 0; i < finalAmmount; i++) {
             //primary asteroid creator
-            float size = Mathf.Floor (maxSize * Mathf.Pow ((float) Random.Range (0f, 1f), Mathf.Pow (2, Mathf.Cos (asteroidBias * Mathf.PI)))); //2 is close to 0, 0.5 is close to 1
+            float size = Mathf.Floor (maxSize * Mathf.Pow ((float) SeedRandom (0f, 1f), Mathf.Pow (2, Mathf.Cos (asteroidBias * Mathf.PI)))); //2 is close to 0, 0.5 is close to 1
             //Crater x and y's
-            int cX = (int) Random.Range (0, heightMap.GetLength (0));
-            int cY = (int) Random.Range (0, heightMap.GetLength (1));
+            int cX = (int) SeedRandom (0, heightMap.GetLength (0));
+            int cY = (int) SeedRandom (0, heightMap.GetLength (1));
 
             if (size > midLine) {
                 //complex
@@ -157,7 +170,7 @@ public class NaturalWorldGen : MonoBehaviour {
     public void veryRandom () { //Assigns really random numbers to the heightmap. For erosion and smoothing testing
         for (int x = 0; x < heightMap.GetLength (0); x++) {
             for (int y = 0; y < heightMap.GetLength (1); y++) {
-                heightMap[x, y] = Random.Range (0, heightMapMax);
+                heightMap[x, y] = SeedRandom (0, heightMapMax);
             }
         }
     }
@@ -344,6 +357,15 @@ public class NaturalWorldGen : MonoBehaviour {
             }
         }
         return aS;
+    }
+
+    //SeedRandom
+    private float SeedRandom(float lower, float higher) {
+        //Random does from lower value to almost the higher value (inclusive to both bottom and top)
+        float output = Random.value;
+        output *= higher;
+        output += lower;
+        return output;
     }
 
     public void tempTest () {

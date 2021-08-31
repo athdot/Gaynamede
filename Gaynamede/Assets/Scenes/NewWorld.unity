@@ -408,6 +408,7 @@ MonoBehaviour:
   terrainSlopeModifier: 1
   smootherIteration: 7
   asteroidSmoothing: 5
+  seed: -1
 --- !u!4 &2024818281
 Transform:
   m_ObjectHideFlags: 0
